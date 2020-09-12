@@ -1,60 +1,47 @@
+#define ARRAY_SIZE 3
 
-// 本函数是实现 3 * 3 均值滤波
-//函数的的当前点的像素 = 3 * 3 范围的平均值
-// @para src 输入图像数据
-// @para srcW 输入图形宽
-// @para srcH 输入图像的高
-// @para channels 通道数 
-// @para dest 输出图像 ， 输出图像的大小和输入一样
-    int MeanFilter(unsigned char * src, int srcW, int srcH, int channels, unsigned char * dest)
-    {
-        int i = 0;
-        int j = 0;
-        int k = 0;
-
-        int ModelWH = 3;
-        int halfM = ModelWH / 2;
-
-        int m = 0;
-        int n = 0;
-        if (channels > 4 || channels < 1)
-        {
-            return -1;
-        }
-
-        for (i = 0; i < srcH; i++)
-        {
-            for (j = 0; j < srcW; j++)
-            {
-                int sum = 0;
-
-                int temp[4] = { 0, 0, 0, 0 };
-                int count[4] = { 0, 0, 0, 0 };
-                for (n = i - halfM; n <= i + halfM; n++)
-                {
-                    for (m = j - halfM; m <= j + halfM; m++)
-                    {
-                        for (k = 0; k < channels; k++)
-                        {
-                            unsigned char temp1 = 0;
-                            if (n > 0 && n < srcH && m > 0 && m < srcW)
-                            {
-                                temp1 = src[(n * srcW + m) * channels + k];
-
-                                count[k]++;
-                                temp[k] += temp1;
-                            }
-
-                        }
-
-                    }
-                }
-
-                for (k = 0; k < channels; k++)
-                {
-                    dest[(i * srcW + j) * channels + k] = (unsigned char)((temp[k] * 1.0f / (count[k])+0.5f));
-                }
-            }
-        }
+int is_in_array(short x, short y, short height, short width)
+{
+    if (x >= 0 && x < width && y >= 0 && y < height)
+        return 1;
+    else
         return 0;
+}
+
+/*
+ * element
+ * v0  v1  v2
+ * v3  v4  v5
+ * v6  v7  v8
+ *
+ */
+void filtering(short** in_array, short** out_array, long height, long width)
+{
+    short value[9];
+
+    for (int i = 0; i < height; i++){
+        for (int j = 0; j < width; j++){
+            value[0] = is_in_array(j-1, i-1, height, width) ? in_array[i-1][j-1] : 0;
+            value[1] = is_in_array(j, i-1, height, width) ? in_array[i-1][j] : 0;
+            value[2] = is_in_array(j+1, i-1, height, width) ? in_array[i-1][j+1] : 0;
+            value[3] = is_in_array(j-1, i, height, width) ? in_array[i][j-1] : 0;
+            value[4] = in_array[i][j];
+            value[5] = is_in_array(j+1, i, height, width) ? in_array[i][j+1] : 0;
+            value[6] = is_in_array(j-1, i+1, height, width) ? in_array[i+1][j-1] : 0;
+            value[7] = is_in_array(j, i+1, height, width) ? in_array[i+1][j] : 0;
+            value[8] = is_in_array(j+1, i+1, height, width) ? in_array[i+1][j+1] : 0;
+
+            /* Arithmetic Mean Filter */
+            for (int k = 0; k < ARRAY_SIZE*ARRAY_SIZE; k++)
+                out_array[i][j] += value[k];
+            out_array[i][j] /= ARRAY_SIZE*ARRAY_SIZE;
+
+            /* median filtering */
+            /*out_array[i][j] = mid_val(value, 9);
+            if (out_array[i][j] < 0x00)
+                out_array[i][j] = 0x00;
+            else if (out_array[i][j] > 0xff)
+                out_array[i][j] = 0xff;*/
+        }
     }
+}
